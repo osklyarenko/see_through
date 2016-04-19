@@ -62,8 +62,10 @@ target/
 .ipynb_checkpoints
 .idea
 *~
+deploy/
 conf.yml
 Gemfile.lock
 data.db
 database.log
 schema.rb
+launch.sh

@@ -1,21 +1,14 @@
-echo "------------------------------------------------------------------"
-echo "------------------ Provision package lists -----------------------" 
-echo "------------------------------------------------------------------"
+echo "------ Provision package lists ------"
 
 sudo apt-get -y update
 
-echo "------------------------------------------------------------------"
-echo "--------------------- Install ruby -------------------------------" 
-echo "------------------------------------------------------------------"
+echo "------ Install ruby ------"
 
 curl -L https://get.rvm.io | bash -s stable --ruby=2.2.1-dev
 
 sudo apt-get install -y ruby-all-dev
 
-echo "------------------------------------------------------------------"
-echo "--------------------- Install gems -------------------------------" 
-echo "------------------------------------------------------------------"
-
+echo "------ Install gems ------"
 
 sudo gem install activerecord
 sudo gem install octokit
@@ -27,9 +20,11 @@ sudo gem install sinatra
 sudo gem install haml
 sudo gem install time_difference
 
-echo "------------------------------------------------------------------"
-echo "--------------------- Add cron jobs ------------------------------" 
-echo "------------------------------------------------------------------"
+echo "------ Install git ------"
 
-echo "0 * * * * /home/ubuntu/daily_report.sh
-*/15 * * * * /home/ubuntu/conflict_checker.sh" | crontab -
+sudo apt-get -y install git
+
+echo "------ Add cron jobs ------   "
+
+echo "0 * * * * /home/ubuntu/box/see_through/daily_report.sh
+*/15 * * * * /home/ubuntu/box/see_through/conflict_checker.sh" | crontab -
