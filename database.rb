@@ -55,7 +55,8 @@ class Database
         :user_email => user.email,
         :notify_at => user.tz_shift,
         :git_hub_id => user.id,
-        :enable => false,
+        :slack_id => user.slack_id,
+        :enable => user.enable,
     )
   end
 
@@ -140,10 +141,11 @@ class Database
 
     ActiveRecord::Base.establish_connection(
         :adapter => 'sqlite3',
-        :database => 'db/data.db'
+        :database => 'db/development.sqlite3'
     )
 
     ActiveRecord::Schema.new.migrations_paths
 
   end
 end
+

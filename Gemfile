@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+gem 'activesupport', '4.2.7'
+gem 'slack-ruby-client'
 gem 'sqlite3'
 gem 'activerecord'
 gem 'octokit'

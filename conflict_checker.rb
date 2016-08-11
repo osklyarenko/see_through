@@ -5,10 +5,12 @@ require_relative 'octokit_client'
 require_relative 'main_controller'
 require_relative 'mailler'
 require_relative 'time_class'
+require_relative 'slack_client'
 
 class ConflictChecker
 
   def initialize
+    @slack_client = SlackClient.new
     @email = Email.new
     @repositories = Config_reader.new.get_repos
     @client = OctokitClient.new
@@ -23,6 +25,10 @@ class ConflictChecker
   def start
 
     @logger.info('conflict_checker start')
+
+    Config_reader.new.get_users_from_config_yml.each do |user|
+      @controller.sync_user_with_config user
+    end
 
     @repositories.each do |repo|
 
@@ -64,21 +70,33 @@ class ConflictChecker
 
         check_for_new_conflicts(db_pull_requests, github_pull_requests, repository).each do |pr|
           pull = @controller.get_pr_by_id pr.number
-          recipients.add(@controller.get_user_by_login(pull[0].author)[:user_email])
-          conflict << "<h3>Pull Request -  #{pull[0][:title]} <a href='https://github.com/#{repository}/pull/#{pull[0].pr_id}/'>##{pull[0].pr_id}</a></h3>
-        <p>Author: #{pull[0].author}</p>
-        <p>Time in conflict: <b><span style='color: red;'> #{@time.get_conflict_time(pull[0])}</span></b></p><br>"
+          #recipients.add(@controller.get_user_by_login(pull[0].author)[:user_email])
+          #conflict << "<h3>Pull Request -  #{pull[0][:title]} <a href='https://github.com/#{repository}/pull/#{pull[0].pr_id}/'>##{pull[0].pr_id}</a></h3>
+        #<p>Author: #{pull[0].author}</p>
+        #<p>Time in conflict: <b><span style='color: red;'> #{@time.get_conflict_time(pull[0])}</span></b></p><br>"
+          user = @controller.get_user_by_login(pull[0].author)
+          if user && user.enable
+            login = pull[0].author
+            recipient = @controller.get_user_by_login(pull[0].author)[:slack_id]
+            create_slack_message repository, login, pr, recipient
+          end
         end
 
-        create_mail repo, merged, conflict, old_pr_block, recipients
+        #create_mail repo, merged, conflict, old_pr_block, recipients
 
         new_pull_requests.each do |pull|
           pr_data = @client.get_github_pr_by_number repository, pull
           @controller.create_or_update_pr pr_data, repository
           if pr_data.mergeable.to_s == 'false'
-            recipient = [].to_set
-            recipient.add(@controller.get_user_by_login(pr_data.user.login)[:user_email])
-            create_mail repo, merged, conflict, old_pr_block, recipient
+            #recipient = [].to_set
+            #recipient.add(@controller.get_user_by_login(pr_data.user.login)[:user_email])
+            #create_mail repo, merged, conflict, old_pr_block, recipient
+            user = @controller.get_user_by_login(pr_data.user.login)
+            if user && user.enable
+              login = pr_data.user.login
+              recipient = user[:slack_id]
+              create_slack_message repository, login, pr_data, recipient
+            end
           end
         end
 
@@ -120,6 +138,23 @@ class ConflictChecker
     return pull
   end
 
+  def create_slack_message(repo, user, pr_data, recipient)
+
+    attachments = [{
+                       fallback: "Merge Conflict",
+                       title: "##{pr_data.number} - #{pr_data.title}",
+                       title_link: "https://github.com/#{repo}/pull/#{pr_data.number}/",
+                       pretext: "Hi #{user}!",
+                       text: "You've got some merge conflict.",
+                       mrkdwn_in: [
+                           "text",
+                           "pretext"]
+                   }]
+
+
+    @slack_client.send_message(attachments, recipient)
+  end
+
   def create_mail (repo, merged, conflict, old_pr_block, recipients)
 
     if merged.length > 2
@@ -153,3 +188,4 @@ EOF
 end
 
 ConflictChecker.new
+

@@ -17,7 +17,7 @@ class Config_reader
 
   def read_users_from_config_yml
     @config['profiles'].each do |profile|
-      @profiles.push(Profile.new(profile['login'], profile['email'], profile['id'], profile['tz_shift'], profile['enable']))
+      @profiles.push(Profile.new(profile['login'], profile['email'], profile['id'], profile['slack_id'], profile['tz_shift'], profile['enable']))
     end
   end
 
@@ -35,3 +35,4 @@ class Config_reader
   private :read_repos, :read_users_from_config_yml
 
 end
+
