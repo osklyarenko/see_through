@@ -27,6 +27,9 @@ class Database
   class DailyReport < ActiveRecord::Base
   end
 
+  class PullRequestMetrics < ActiveRecord::Base
+  end
+
   def create_pull_request (pull_request_data, repo, pr)
     PullRequest.create(
         :repo => repo,
@@ -47,6 +50,32 @@ class Database
     # commentors = pull_request_data[:commentors].to_a
     # build_list_of_commentors commentors
     @logger.info("Pull request##{pull_request_data[:number]} was added to database!")
+  end
+
+  def create_new_pr_metrics(pr_metrics)
+    PullRequestMetrics.create(
+      :author => pr_metrics[:author],
+      :repo => pr_metrics[:repo],
+      :number => pr_metrics[:number],
+      :title => pr_metrics[:title],
+      :merged => pr_metrics[:merged],
+      :mergeable => pr_metrics[:mergeable],
+      :mergeable_state => pr_metrics[:mergeable_state],
+      :create_time => pr_metrics[:create_time],
+      :update_time => pr_metrics[:update_time],
+      :state => pr_metrics[:state],
+      :additions => pr_metrics[:additions],
+      :deletions => pr_metrics[:deletions],
+      :changed_files => pr_metrics[:changed_files],
+      :commits => pr_metrics[:commits],
+      :comments => pr_metrics[:comments],
+      :committers => pr_metrics[:committers],
+      :commentors => pr_metrics[:commentors],
+      :head_label => pr_metrics[:head_label],
+      :base_sha => pr_metrics[:base_sha],
+      :head_sha => pr_metrics[:head_sha],
+      :added_to_database => Time.new,
+    )
   end
 
   def create_new_user (user)
@@ -83,6 +112,14 @@ class Database
   end
 
 # Getters
+  def get_pr_metrics(number)
+    PullRequestMetrics.find_by(number: number)
+  end
+
+  def get_all_prs_metrics
+    PullRequestMetrics.all
+  end
+
   def get_daily_report_state (user_login)
     DailyReport.where(user_name: user_login).first
   end
