@@ -72,8 +72,8 @@ class ConflictChecker
           pull = @controller.get_pr_by_id pr.number
           user = @controller.get_user_by_login(pull[0].author)
           if user
-          	recipients.add(@controller.get_user_by_login(pull[0].author)[:user_email])
-          	conflict << "<h3>Pull Request -  #{pull[0][:title]} <a href='https://github.com/#{repository}/pull/#{pull[0].pr_id}/'>##{pull[0].pr_id}</a></h3>
+               recipients.add(@controller.get_user_by_login(pull[0].author)[:user_email])
+               conflict << "<h3>Pull Request -  #{pull[0][:title]} <a href='https://github.com/#{repository}/pull/#{pull[0].pr_id}/'>##{pull[0].pr_id}</a></h3>
         <p>Author: #{pull[0].author}</p>
         <p>Time in conflict: <b><span style='color: red;'> #{@time.get_conflict_time(pull[0])}</span></b></p><br>"
 
