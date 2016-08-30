@@ -160,6 +160,8 @@ class ConflictChecker
                            "text",
                            "pretext"]
                    }]
+
+
     @slack_client.send_message(attachments, recipient)
   end
 
