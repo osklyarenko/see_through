@@ -59,7 +59,7 @@ class ConflictChecker
         merged = '<h2>Recently merged</h2><hr>'
         conflict = '<h2>Now in conflict</h2><hr>'
 
-        new_pull_requests = db_pr_numbers ^ github_pr_numbers
+        new_pull_requests = github_pr_numbers - db_pr_numbers
 
         check_pull_requests_state(new_pull_requests, repository).each do |pr|
           merged << "<h3>Pull Request -  #{pr.title} <a href='https://github.com/#{repository}/pull/#{pr.number}/'>##{pr.number}</a></h3>
@@ -72,8 +72,8 @@ class ConflictChecker
           pull = @controller.get_pr_by_id pr.number
           user = @controller.get_user_by_login(pull[0].author)
           if user
-          	recipients.add(@controller.get_user_by_login(pull[0].author)[:user_email])
-          	conflict << "<h3>Pull Request -  #{pull[0][:title]} <a href='https://github.com/#{repository}/pull/#{pull[0].pr_id}/'>##{pull[0].pr_id}</a></h3>
+            recipients.add(@controller.get_user_by_login(pull[0].author)[:user_email])
+            conflict << "<h3>Pull Request -  #{pull[0][:title]} <a href='https://github.com/#{repository}/pull/#{pull[0].pr_id}/'>##{pull[0].pr_id}</a></h3>
         <p>Author: #{pull[0].author}</p>
         <p>Time in conflict: <b><span style='color: red;'> #{@time.get_conflict_time(pull[0])}</span></b></p><br>"
 
@@ -135,7 +135,11 @@ class ConflictChecker
           if db_pr.pr_id.to_i == gh_pr.number.to_i
             this_pull = @client.get_github_pr_by_number repo, db_pr.pr_id
             if this_pull.mergeable == false
-              pull.push(this_pull)
+              if this_pull.state == "closed"
+                @controller.create_or_update_pr this_pull, repository
+              else
+                pull.push(this_pull)
+              end
             end
           end
         end
@@ -160,7 +164,7 @@ class ConflictChecker
 
     @slack_client.send_message(attachments, recipient)
   end
-
+  
 
   def create_mail (repo, merged, conflict, old_pr_block, recipients)
 
