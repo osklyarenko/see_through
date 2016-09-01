@@ -145,7 +145,7 @@ class ConflictChecker
     end
     @logger.info('conflict checker end')
   end
-  
+
 
   def check_old_prs_with_migration_conflict(repo, migration_folders)
     still_conflicted = [].to_set
@@ -217,7 +217,7 @@ class ConflictChecker
                        title: "##{pr.pr_id} - #{pr.title}",
                        title_link: "https://github.com/#{repo}/pull/#{pr.pr_id}/",
                        pretext: "Hi #{user}!",
-                       text: "You've got a migrations conflict! Last master migration is #{path}/#{last_master_migration}.",
+                       text: "You've got a database migration conflict! Last master migration is #{path}/#{last_master_migration}.",
                        mrkdwn_in: [
                            "text",
                            "pretext"]
