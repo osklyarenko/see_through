@@ -110,8 +110,16 @@ class MainController
     @db.get_pull_requests_by_state state
   end
 
+  def get_repo_prs_with_migration_conflict(repo)
+    @db.get_repo_prs_with_migration_conflict(repo)
+  end
+
   def update_pr_state (pr, state)
     @db.update_pull_request_state pr, state
+  end
+
+  def update_pr_migration_conflict(pr_id, has_migration_conflict)
+    @db.update_pr_migration_conflict(pr_id, has_migration_conflict)
   end
 
   def get_recipients_list

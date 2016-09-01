@@ -11,7 +11,7 @@ class Config_reader
 
   def read_repos
     @config['repositories'].each do |repository|
-      @repositories.push(Repository.new(repository['name'], repository['recepients']))
+      @repositories.push(Repository.new(repository['name'], repository['recepients'], repository['migration_folders']))
     end
   end
 

@@ -104,4 +104,25 @@ class OctokitClient
     @main_controller.create_or_update_pr pr_data, repo
   end
 
+  def get_master_migrations(repo, path)
+    result = CLIENT.contents(repo, :path => path)
+    result_names = []
+    result.each do |file|
+      result_names << file.to_hash[:name]
+    end
+    result_names.sort_by {|m| m.split('__')[0].length}
+  end
+
+  def get_pr_migrations(pr_files, path)
+    result = []
+    pr_files.each do |file|
+      name = file.to_hash[:filename].split('/')
+      file_name, file_path = name.pop, name.join('/')
+      if file_path == path
+        result << file_name
+      end
+    end
+    result.sort_by {|m| m.split('__')[0].length}
+  end
+
 end

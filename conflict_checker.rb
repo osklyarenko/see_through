@@ -111,10 +111,73 @@ class ConflictChecker
           @controller.create_or_update_pr pr_data, repository
         end
 
+
+        repo_migrations_folders = repo.migration_folders
+        
+        check_old_prs_with_migration_conflict(repository, repo_migrations_folders).each do |resolved_pr|
+          @controller.update_pr_migration_conflict(pr, false)
+        end
+
+        prs = @controller.get_repo_pr_by_state(repository, 'open')
+        prs_files_for_checking = {}
+        prs.each do |pr|
+          if !pr[:has_migration_conflict]
+            prs_files_for_checking[pr[:pr_id]] = CLIENT.pull_files(repository, pr[:pr_id])
+          end
+        end
+
+        prs_with_migration_conflict = []
+        repo_migrations_folders.each do |path|
+          last_master_migration = @client.get_master_migrations(repository, path)[-1]
+          prs_with_migration_conflict = check_for_migrations_conflicts(last_master_migration, path, prs_files_for_checking)
+
+          prs_with_migration_conflict.each do |pr|
+            pull_request = @controller.get_pr_by_id(pr)[0]
+            user = pull_request[:author]
+            if user
+              recipient = @controller.get_user_by_login(user)[:slack_id]
+              create_slack_message_on_migr_conflict(repository, user, pull_request, path, last_master_migration, recipient)
+            end
+            @controller.update_pr_migration_conflict(pr, true)
+          end
+        end
       end
     end
     @logger.info('conflict checker end')
   end
+  
+
+  def check_old_prs_with_migration_conflict(repo, migration_folders)
+    still_conflicted = [].to_set
+    old_prs_files = {}
+    @controller.get_repo_prs_with_migration_conflict(repo).each do |pr|
+      old_prs_files[pr[:pr_id]] = CLIENT.pull_files(repo, pr[:pr_id])
+    end
+    migration_folders.each do |path|
+      last_master_migration = @client.get_master_migrations(repo, path)[-1]
+      still_conflicted += check_for_migrations_conflicts(last_master_migration, path, old_prs_files)
+    end
+    old_prs_files.keys.to_set - still_conflicted
+  end
+
+  def check_for_migrations_conflicts(last_master_migration, path, prs_files)
+    prs_migrations = {}
+    prs_files.each do |number, pr_files|
+      pr_migrations = @client.get_pr_migrations(pr_files, path)
+      if pr_migrations.length > 0
+        prs_migrations[number] = pr_migrations
+      end
+    end
+    prs_with_migr_conflict = []
+    last_master_migr_id = last_master_migration.split('__')[0].split('_')[1]
+    prs_migrations.each do |number, migrations|
+      pr_migr_id = migrations[0].split('__')[0].split('_')[1]
+      if pr_migr_id.to_i - 1 != last_master_migr_id.to_i
+        prs_with_migr_conflict << number
+      end
+    end
+    prs_with_migr_conflict
+  end 
 
   def check_pull_requests_state (pull_requests, repository)
     pull = []
@@ -146,6 +209,20 @@ class ConflictChecker
       end
     end
     return pull
+  end
+
+  def create_slack_message_on_migr_conflict(repo, user, pr, path, last_master_migration, recipient)
+    attachments = [{
+                       fallback: "Migrations Conflict",
+                       title: "##{pr.pr_id} - #{pr.title}",
+                       title_link: "https://github.com/#{repo}/pull/#{pr.pr_id}/",
+                       pretext: "Hi #{user}!",
+                       text: "You've got a migrations conflict! Last master migration is #{path}/#{last_master_migration}.",
+                       mrkdwn_in: [
+                           "text",
+                           "pretext"]
+                   }]
+    @slack_client.send_message(attachments, recipient)          
   end
 
   def create_slack_message(repo, user, pr_data, recipient)

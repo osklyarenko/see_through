@@ -82,6 +82,11 @@ class Database
     pull_request.update(state: state)
   end
 
+  def update_pr_migration_conflict(pr_id, has_migration_conflict)
+    pr = get_pull_request_by_id(pr_id.to_i)
+    pr.update(has_migration_conflict: has_migration_conflict)
+  end
+
 # Getters
   def get_daily_report_state (user_login)
     DailyReport.where(user_name: user_login).first
@@ -101,6 +106,10 @@ class Database
 
   def get_all_repositories
     Repository.all
+  end
+      
+  def get_repo_prs_with_migration_conflict(repo)
+    PullRequest.where(repo: repo, state: 'open', has_migration_conflict: true)
   end
 
   def get_repo_pr_by_mergeable (repo, state)
