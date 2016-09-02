@@ -1,5 +1,6 @@
 #!/usr/bin/env rsuby
 require 'octokit'
+require 'pathname'
 require_relative 'main_controller'
 
 CLIENT = Octokit::Client.new(:access_token => ENV['SEE_THROUGH_TOKEN'])
@@ -110,19 +111,19 @@ class OctokitClient
     result.each do |file|
       result_names << file.to_hash[:name]
     end
-    result_names.sort_by {|m| m.split('__')[0].length}
+    result_names.sort_by {|m| m[/\d+__/].to_i}
   end
 
   def get_pr_migrations(pr_files, path)
     result = []
     pr_files.each do |file|
-      name = file.to_hash[:filename].split('/')
-      file_name, file_path = name.pop, name.join('/')
+      f = Pathname.new(file.to_hash[:filename])
+      file_name, file_path = f.basename.to_s, f.dirname.to_s
       if file_path == path
         result << file_name
       end
     end
-    result.sort_by {|m| m.split('__')[0].length}
+    result.sort_by {|m| m[/\d+__/].to_i}
   end
 
 end

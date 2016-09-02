@@ -169,10 +169,10 @@ class ConflictChecker
       end
     end
     prs_with_migr_conflict = []
-    last_master_migr_id = last_master_migration.split('__')[0].split('_')[1]
+    last_master_migration_id = last_master_migration[/\d+__/].to_i
     prs_migrations.each do |number, migrations|
-      pr_migr_id = migrations[0].split('__')[0].split('_')[1]
-      if pr_migr_id.to_i - 1 != last_master_migr_id.to_i
+      first_pr_migration_id = migrations[0][/\d+__/].to_i
+      if first_pr_migration_id - 1 != last_master_migration_id
         prs_with_migr_conflict << number
       end
     end
@@ -213,11 +213,11 @@ class ConflictChecker
 
   def create_slack_message_on_migr_conflict(repo, user, pr, path, last_master_migration, recipient)
     attachments = [{
-                       fallback: "Migrations Conflict",
+                       fallback: "DB migration Conflict",
                        title: "##{pr.pr_id} - #{pr.title}",
                        title_link: "https://github.com/#{repo}/pull/#{pr.pr_id}/",
                        pretext: "Hi #{user}!",
-                       text: "You've got a database migration conflict! Last master migration is #{path}/#{last_master_migration}.",
+                       text: "You've got a database migration conflict! Last master migration is: #{path}/#{last_master_migration}.",
                        mrkdwn_in: [
                            "text",
                            "pretext"]
