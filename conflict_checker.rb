@@ -115,7 +115,7 @@ class ConflictChecker
         repo_migrations_folders = repo.migration_folders
         
         check_old_prs_with_migration_conflict(repository, repo_migrations_folders).each do |resolved_pr|
-          @controller.update_pr_migration_conflict(pr, false)
+          @controller.update_pr_migration_conflict(resolved_pr, false)
         end
 
         prs = @controller.get_repo_pr_by_state(repository, 'open')
