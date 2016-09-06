@@ -2,35 +2,16 @@ require_relative 'database'
 require_relative 'octokit_client'
 
 class MainController
-
   def initialize
     @db = Database.new
-  end
-
-  def get_pr (repo)
-    octokit_client = OctokitClient.new
-    pr_data = octokit_client.get_all_github_pr repo
-    if pr_data != nil
-      pr_data.each do |pr|
-        octokit_client.check_pr_for_existing pr, repo
-        octokit_client.check_pr_status repo
-      end
-    end
-  end
-
-  def add_new_pr (pr_data, repo)
-    pr = CLIENT.pull_request(repo, pr_data.number)
-    @db.create_pull_request pr_data, repo, pr
+    @octokit_client = OctokitClient.new
   end
 
   def checking_pr_for_changes (pr_data, repo)
 
-    existing_pull_requests = get_pr_by_repo repo
-
-    existing_pull_requests.each do |pull_request|
-      if pr_data.number.to_i == pull_request.pr_id.to_i
-
-        pr = CLIENT.pull_request(repo, pr_data.number)
+    pull_request = @db.get_pull_request_by_id pr_data[:number]
+    if pr_data.number.to_i == pull_request.pr_id.to_i
+      pr = CLIENT.pull_request(repo, pr_data.number)
 
         if pull_request.repo != repo
           pull_request.update(repo: repo)
@@ -56,7 +37,25 @@ class MainController
         if pull_request.labels != pr.label
           pull_request.update(labels: pr.label)
         end
+    end  
+  end
+
+  def check_pr_metrics gh_pr_metrics
+    pull_request_metrics = @db.get_pr_metrics gh_pr_metrics[:number]
+    gh_pr_metrics.each do |k, v|
+      if pull_request_metrics[k] != v
+        pull_request_metrics.update(k => v)
       end
+    end
+  end
+
+  def create_or_update_pr_metrics repo, number
+    db_metrics = @db.get_pr_metrics number
+    gh_pr_metrics = @octokit_client.get_pr_metrics(repo, number)
+    if !db_metrics
+      add_new_pr_metrics gh_pr_metrics
+    else
+      check_pr_metrics gh_pr_metrics
     end
   end
 
@@ -76,6 +75,15 @@ class MainController
     create_new_user user
   end
 
+  def add_new_pr (pr_data, repo)
+    pr = CLIENT.pull_request(repo, pr_data.number)
+    @db.create_pull_request pr_data, repo, pr
+  end
+
+  def add_new_pr_metrics(pr_metrics)
+    @db.create_new_pr_metrics(pr_metrics)
+  end
+
   def sync_user_with_config (user)
     daily_report = user.enable
     user_to_update = @db.get_user_by_login user.login
@@ -84,6 +92,20 @@ class MainController
     else
       user_to_update.update(enable: daily_report, notify_at: user.tz_shift, user_email: user.email, slack_id: user.slack_id)
     end
+  end
+
+  def update_db_prs_metrics
+    get_pr_by_state('open').each do |pr|
+      create_or_update_pr_metrics(pr[:repo], pr[:pr_id])
+    end
+  end
+
+  def get_pr_metrics(number)
+    @db.get_pr_metrics(number)
+  end
+
+  def get_all_prs_metrics
+    @db.get_all_prs_metrics
   end
 
   def get_repo_pr_by_mergeable (repo, state)

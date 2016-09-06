@@ -1,0 +1,44 @@
+body {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+env-form.label {
+    font-
+}
+
+@media (min-width: 1300px)
+.container {
+    width: 1270px;
+}
+.login {
+    width:350px;
+	height:150px;
+	position:absolute;
+	left:50%;
+	top:50%;
+	margin:-100px 0 0 -150px;
+	border: 1px solid grey;
+	border-radius: 3px;
+}
+.mess {
+    margin-top: -20px;
+    margin-bottom: -20px;
+    margin-left: 25px;
+}
+.gh-login-btn {
+    width: 300px;
+    margin: 25px;
+    margin-top: 30px;
+}
+.pr_list, .graph {
+    display: inline;
+}
+.pr_list {
+    width: 50%;
+    float: left;
+}
+.graph {
+    width: 50%;
+    float: right;
+}

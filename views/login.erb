@@ -1,0 +1,11 @@
+
+<div class="jumbotron login">
+	<div class="mess">
+		<% if message %><%= message %><% end %>
+	</div>
+    <div class="gh-login-btn">
+        <a href="https://github.com/login/oauth/authorize?scope=read:org&client_id=<%= client_id %>" class="btn btn-block btn-social btn-github" onclick="_gaq.push(['_trackEvent', 'btn-social', 'click', 'btn-github']);">
+            <span class="fa fa-github"></span> Sign in with GitHub
+        </a>
+    </div>
+</div>

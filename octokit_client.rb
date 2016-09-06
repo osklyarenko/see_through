@@ -7,10 +7,6 @@ CLIENT = Octokit::Client.new(:access_token => ENV['SEE_THROUGH_TOKEN'])
 
 class OctokitClient
 
-  def initialize
-    @main_controller = MainController.new
-  end
-
   def get_github_pr repo
     pr_data = {}
 
@@ -69,19 +65,6 @@ class OctokitClient
     pr_data
   end
 
-  def check_pr_status (repo)
-    begin
-      @main_controller.get_pr_by_repo(repo).each do |pull_request|
-        checking = CLIENT.pull_request(repo, pull_request.pr_id)
-        if checking.merged.to_s == 'true'
-          @main_controller.update_pr_state pull_request, 'merged'
-        else
-          @main_controller.update_pr_state pull_request, checking.state
-        end
-      end
-    end
-  end
-
   def get_all_github_pr (repo)
     begin
       pulls = CLIENT.pull_requests repo
@@ -101,8 +84,119 @@ class OctokitClient
     CLIENT.pull_request repo, number
   end
 
-  def check_pr_for_existing (pr_data, repo)
-    @main_controller.create_or_update_pr pr_data, repo
+  def get_pr_commentors(repo, id)
+    commentors = []
+    CLIENT.issue_comments(repo, id).each do |comment|
+      username = comment[:user][:login]
+      post_date = comment[:created_at]
+      content = comment[:body]
+      
+      commentors.push(username)
+    end
+
+    CLIENT.pull_request_comments(repo, id).each do |comment|
+      username = comment[:user][:login]
+      post_date = comment[:created_at]
+      content = comment[:body]
+      path = comment[:path]
+      position = comment[:position]
+
+      commentors.push(username)
+    end
+
+    commits = CLIENT.pull_request_commits(repo, id)
+    commits.each do |commit|
+      CLIENT.commit_comments(repo, commit[:sha]).each do |comment|
+        commentors.push(comment[:user][:login])
+      end
+    end
+
+    commentors.uniq
+  end
+
+
+  def get_pr_committers(repo, id)
+    commiters = []
+    commits = CLIENT.pull_request_commits(repo, id)
+    commits.each do |commit|
+      if commit[:author]
+        commiters.push(commit[:author][:login])
+      elsif commit[:committer]
+        commiters.push(commit[:committer][:login])
+      end
+    end
+    commiters.uniq
+  end
+
+
+  def get_pr_metrics(repo, id)
+    pr = CLIENT.pull_request(repo, id)
+    pr_data = {}
+    pr_data[:author] = pr.user.login
+    pr_data[:repo] = repo
+    pr_data[:title] = pr.title
+    pr_data[:number] = pr.number
+    pr_data[:merged] = pr.merged
+    pr_data[:mergeable] = pr.mergeable
+    pr_data[:mergeable_state] = pr.mergeable_state
+    pr_data[:create_time] = pr.created_at
+    pr_data[:update_time] = pr.updated_at
+    pr_data[:state] = pr.state
+    pr_data[:additions] = pr.additions
+    pr_data[:deletions] = pr.deletions
+    pr_data[:changed_files] = pr.changed_files
+    pr_data[:commits] = pr.commits
+    pr_data[:comments] = pr.comments
+    pr_data[:committers] = get_pr_committers(repo, id).join(', ')
+    pr_data[:commentors] = get_pr_commentors(repo, id).join(', ')
+    pr_data[:head_label] = pr.head.label
+    pr_data[:base_sha] = pr.base.sha
+    pr_data[:head_sha] = pr.head.sha
+
+    pr_data
+  end
+
+  def get_committers_stats_by_pr repo, id, commiters
+    commits = CLIENT.pull_request_commits(repo, id)
+    commiters_stats = []
+    commiters.each do |committer|
+      user_commits = []
+      commits.each do |commit|
+        if commit[:author]
+          if commit[:author][:login] == committer
+            new_commit = CLIENT.commit(repo, commit[:sha])
+            new_user_commit_stats = {}
+            new_user_commit_stats[:sha] = new_commit[:sha]
+            new_user_commit_stats[:stats] = new_commit[:stats]
+            new_user_commit_stats[:changed_files] = new_commit[:files].length
+            if new_commit[:commit][:author]
+              new_user_commit_stats[:date] = new_commit[:commit][:author][:date]
+            elsif new_commit[:commit][:committer]
+              new_user_commit_stats[:date] = new_commit[:commit][:committer][:date]
+            end
+              
+            user_commits.push(new_user_commit_stats)
+          end
+        else
+          if commit[:commiter] && commit[:commiter][:login] == committer
+            new_commit = CLIENT.commit(repo, commit[:sha])
+            new_user_commit_stats = {}
+            new_user_commit_stats[:sha] = new_commit[:sha]
+            new_user_commit_stats[:stats] = new_commit[:stats]
+            new_user_commit_stats[:changed_files] = new_commit[:files].length
+            if new_commit[:commit][:author]
+              new_user_commit_stats[:date] = new_commit[:commit][:author][:date]
+            elsif new_commit[:commit][:committer]
+              new_user_commit_stats[:date] = new_commit[:commit][:committer][:date]
+            end
+              
+            user_commits.push(new_user_commit_stats)
+          end
+        end
+      end
+      commiters_stats.push({:committer => committer, :commits => user_commits})
+    end
+    commiters_stats
   end
 
   def get_master_migrations(repo, path)
