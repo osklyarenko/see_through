@@ -1,0 +1,15 @@
+repositories: 
+  - name: "owner/repo"
+    migration_folders:
+      - "path/to/db/migrations1"
+      - "path/to/db/migrations2"
+    recepients: 
+      - "sasha-kantoriz"
+
+profiles:
+  - login: "sasha-kantoriz"
+    email: "email"
+    id: "user's github id"
+    slack_id: "user's slack id"
+    tz_shift: "+03:00"
+    enable: true
