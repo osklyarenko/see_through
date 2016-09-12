@@ -1,3 +1,10 @@
+activity_checker:
+  timeout: 5
+  notify:
+    slack:
+      - "#debug"
+      - "@sasha"
+
 repositories: 
   - name: "owner/repo"
     migration_folders:
