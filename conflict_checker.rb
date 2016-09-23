@@ -118,9 +118,9 @@ class ConflictChecker
           @controller.update_pr_migration_conflict(resolved_pr, false)
         end
 
-        prs = @controller.get_repo_pr_by_state(repository, 'open')
         prs_files_for_checking = {}
-        prs.each do |pr|
+        github_pr_numbers.each do |pull_request|
+          pr = @controller.get_pr_by_id(pull_request).first
           if !pr[:has_migration_conflict]
             prs_files_for_checking[pr[:pr_id]] = CLIENT.pull_files(repository, pr[:pr_id])
           end
