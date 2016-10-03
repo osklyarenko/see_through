@@ -1,0 +1,7 @@
+{
+	"labels": [{
+		"url": "https://api.github.com/repos/sasha-kantoriz/test/labels/enhancement", 
+		"name": "enhancement", 
+		"color": "84b6eb"
+	}]
+}

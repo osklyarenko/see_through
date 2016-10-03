@@ -1,0 +1,7 @@
+{
+	"labels": [{
+		"url": "https://api.github.com/repos/sasha-kantoriz/test/labels/experiment", 
+		"name": "experiment", 
+		"color": "0052cc"
+	}]
+}

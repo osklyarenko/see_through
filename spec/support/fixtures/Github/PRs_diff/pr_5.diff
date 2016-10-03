@@ -1,0 +1,9 @@
+diff --git a/new_file b/new_file
+index fd8e868..b45e836 100644
+--- a/new_file
++++ b/new_file
+@@ -1,2 +1,4 @@
+ New file that will be modified.
++
++
+ pull request2 after pr1

@@ -1,9 +1,11 @@
 require 'active_record'
 require 'logger'
+require_relative 'config/config_reader'
 
 class Database
 
   def initialize
+    @conf = Config_reader.new.get_db_env_conf
     init_database
     @logger = Logger.new('../see_through.log')
   end
@@ -160,8 +162,8 @@ class Database
     ActiveRecord::Base.logger = Logger.new(File.open('../database.log', 'w'))
 
     ActiveRecord::Base.establish_connection(
-        :adapter => 'sqlite3',
-        :database => '../db/data.db'
+        :adapter => @conf["adapter"],
+        :database => @conf["database"]
     )
 
     ActiveRecord::Schema.new.migrations_paths

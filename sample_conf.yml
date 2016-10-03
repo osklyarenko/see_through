@@ -10,6 +10,18 @@ activity_checker:
       - "#debug"
       - "@sasha"
 
+test_repo:
+  - name: "sasha-kantoriz/test"
+    migration_folders:
+      - "db/flyway/processing"
+      - "db/flyway/general"
+      - "db/flyway/authentication"
+      - "db/flyway/accounting"
+      - "db/flyway/migration"
+      - "db/flyway/risk"
+    recepients: 
+      - "sasha-kantoriz"
+
 repositories: 
   - name: "owner/repo"
     migration_folders:

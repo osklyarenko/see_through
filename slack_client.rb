@@ -9,8 +9,6 @@ class SlackClient
     end
 
     @slack_client = Slack::Web::Client.new
-
-    @slack_client.auth_test
   end
 
   def send_message(message, user)
